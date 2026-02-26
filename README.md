@@ -11,8 +11,9 @@ GSU SmartAssist is an intelligent university chatbot designed for Gwanda State U
 - **WhatsApp**: Evolution API (Unverified Bridge)
 
 ## Features
-- 🚀 **Real-time Chat**: Modern web interface for instant answers.
-- 🔐 **Admin Dashboard**: Manage FAQs and view user interaction logs.
+- 🚀 **Context-Aware Chat**: Session-aware responses with FAQ-first matching and AI fallback.
+- 🔐 **Admin Security**: Admin-only middleware for dashboard pages and admin API endpoints.
+- 🧭 **Responsive UI Suite**: Redesigned public chat, FAQ discovery, and admin management screens.
 
 ## Repository Structure
 This project uses a modern **monolith architecture** with Laravel and Inertia.js.
@@ -80,7 +81,15 @@ To use the AI fallback features:
 ## Admin Access
 - **URL**: `/login`
 - **Email**: `admin@gsu.ac.zw`
-- **Password**: `admin123`
+- **Password**: `admin123!`
+
+## Assessment Requirement Alignment
+- **Chat API**: `POST /api/chat` with validation and rate limiting.
+- **FAQ API**: `GET /api/faqs` and admin CRUD endpoints under `/api/admin/faqs`.
+- **Chat Logging**: Admin access to `GET /api/admin/chat-logs`.
+- **Context Handling**: Chat service uses session history + weighted FAQ matching before AI fallback.
+- **Security**: Admin-only middleware applied to `/dashboard`, `/admin/*`, and `/api/admin/*`.
+- **Frontend Requirements**: Responsive chat interface, FAQ page, admin login, and admin dashboard workflows.
 
 ## Documentation
 - [Architecture Diagram](docs/architecture-diagram.md)
@@ -95,4 +104,3 @@ To use the AI fallback features:
 - 📊 **Analytics Dashboard**: Add visual charts for popular questions and AI performance metrics.
 - 📱 **Mobile App**: Develop a lightweight Flutter companion.
 - 🛡️ **Advanced NLP**: Implement Vector Search (Pinecone/Milvus) for better semantic matching in the knowledge base.
-

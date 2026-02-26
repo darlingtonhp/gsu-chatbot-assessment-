@@ -16,7 +16,7 @@ Route::post('/chat', [ChatController::class, 'chat'])->middleware('throttle:60,1
 Route::get('/faqs', [KnowledgeBaseController::class, 'index']);
 
 // Admin API (Protected)
-Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
+Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::apiResource('faqs', KnowledgeBaseController::class)->except(['index']);
     Route::get('/chat-logs', [ChatController::class, 'logs']);
 });

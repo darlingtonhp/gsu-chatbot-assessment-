@@ -1,168 +1,171 @@
 import { Head, Link } from "@inertiajs/react";
 import ApplicationLogo from "@/Components/ApplicationLogo";
 
+const capabilityCards = [
+    {
+        title: "Context-aware Chat API",
+        detail: "Answers combine FAQ grounding with session-aware context for better follow-up responses.",
+    },
+    {
+        title: "Admin Knowledge Console",
+        detail: "Manage FAQs, monitor interaction logs, and continuously improve response quality.",
+    },
+    {
+        title: "Responsive Student Experience",
+        detail: "Chat and FAQ interfaces are optimized for phone, tablet, and desktop workflows.",
+    },
+];
+
+const journeySteps = [
+    {
+        id: "01",
+        title: "Ask anything",
+        detail: "Students can ask about admissions, fees, programmes, support, and campus services.",
+    },
+    {
+        id: "02",
+        title: "Get guided answers",
+        detail: "SmartAssist returns direct answers from the knowledge base, then escalates with AI context.",
+    },
+    {
+        id: "03",
+        title: "Improve continuously",
+        detail: "Admins review logs and update entries so the assistant gets better over time.",
+    },
+];
+
 export default function Welcome({ auth }) {
+    const isAdmin = auth?.user?.role === "admin";
+
     return (
-        <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-600 selection:text-white overflow-x-hidden">
-            <Head title="GSU SmartAssist - University Intelligence" />
+        <div className="relative min-h-screen overflow-hidden">
+            <Head title="GSU SmartAssist" />
 
-            {/* Navigation */}
-            <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                    <ApplicationLogo className="h-10 w-auto fill-current text-blue-600" />
-                    <span className="font-extrabold text-xl tracking-tighter text-slate-900">
-                        GSU <span className="text-blue-600">SmartAssist</span>
-                    </span>
-                </div>
+            <div className="pointer-events-none absolute -right-32 top-10 h-72 w-72 rounded-full bg-cyan-200/40 blur-3xl" />
+            <div className="pointer-events-none absolute -left-16 bottom-0 h-80 w-80 rounded-full bg-orange-200/40 blur-3xl" />
 
-                <div className="flex items-center space-x-6">
-                    <Link
-                        href={route("faqs")}
-                        className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors"
-                    >
-                        FAQs
+            <nav className="sticky top-0 z-50 border-b border-white/70 bg-white/80 backdrop-blur-xl">
+                <div className="section-shell flex items-center justify-between py-4">
+                    <Link href="/" className="flex items-center gap-3">
+                        <ApplicationLogo className="h-10 w-10" />
+                        <div>
+                            <p className="font-display text-base font-bold text-slate-900">
+                                GSU SmartAssist
+                            </p>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                                Intelligent Support Hub
+                            </p>
+                        </div>
                     </Link>
-                    {auth.user ? (
-                        <Link
-                            href={route("dashboard")}
-                            className="bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
-                        >
-                            Admin Dashboard
+
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <Link href={route("faqs")} className="btn-muted hidden sm:inline-flex">
+                            FAQ Library
+                        </Link>
+                    {auth?.user ? (
+                        <Link href={isAdmin ? route("dashboard") : route("chat")} className="btn-brand">
+                            {isAdmin ? "Admin Console" : "Open Chat"}
                         </Link>
                     ) : (
-                        <div className="flex items-center space-x-4">
-                            <Link
-                                href={route("login")}
-                                className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors"
-                            >
-                                Staff Login
-                            </Link>
-                            <Link
-                                href={route("chat")}
-                                className="bg-blue-600 text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
-                            >
-                                Start Chatting
-                            </Link>
-                        </div>
-                    )}
+                            <>
+                                <Link
+                                    href={route("login")}
+                                    className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900"
+                                >
+                                    Staff Login
+                                </Link>
+                                <Link href={route("chat")} className="btn-brand">
+                                    Start Chat
+                                </Link>
+                            </>
+                        )}
+                    </div>
                 </div>
             </nav>
 
-            {/* Hero Section */}
-            <header className="relative pt-32 pb-20 px-6 lg:pt-48 lg:pb-32 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
-                <div className="flex-1 text-center lg:text-left space-y-8">
-                    <div className="inline-flex items-center space-x-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest animate-fade-in">
-                        <span>✨ Powered by Advanced AI</span>
-                    </div>
-                    <h1 className="text-5xl lg:text-7xl font-extrabold text-slate-900 leading-[1.1] animate-slide-up">
-                        Your Personal <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-                            University Assistant
+            <header className="section-shell pb-14 pt-12 md:pb-20 md:pt-20">
+                <div className="grid items-center gap-10 lg:grid-cols-[1.15fr,0.85fr]">
+                    <div className="space-y-8">
+                        <span className="tag-chip animate-fade-up">
+                            University Intelligent Chatbot Platform
                         </span>
-                    </h1>
-                    <p className="text-lg text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed animate-slide-up delay-100">
-                        Get instant answers about GSU admissions, programmes,
-                        fees, and more. SmartAssist is here to guide you through
-                        your academic journey with Gwanda State University.
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 animate-slide-up delay-200">
-                        <Link
-                            href={route("chat")}
-                            className="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-2xl text-lg font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 hover:-translate-y-1 active:scale-95 flex items-center justify-center space-x-3"
-                        >
-                            <span>Chat with SmartAssist</span>
-                            <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                                />
-                            </svg>
-                        </Link>
-                        <Link
-                            href={route("faqs")}
-                            className="w-full sm:w-auto bg-white text-slate-900 border-2 border-slate-100 px-10 py-4 rounded-2xl text-lg font-bold hover:bg-slate-50 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center"
-                        >
-                            Explore FAQs
-                        </Link>
+                        <div className="space-y-5">
+                            <h1 className="font-display text-4xl font-extrabold leading-tight text-slate-900 md:text-6xl lg:text-7xl animate-fade-up animate-delay-100">
+                                Campus help, <span className="text-gradient">instantly accessible</span>
+                            </h1>
+                            <p className="max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg animate-fade-up animate-delay-200">
+                                GSU SmartAssist gives students, applicants, and staff fast answers on admissions,
+                                programmes, fees, academic calendar, library services, and ICT support.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3 animate-fade-up animate-delay-300">
+                            <Link href={route("chat")} className="btn-brand">
+                                Open Live Chat
+                            </Link>
+                            <Link href={route("faqs")} className="btn-muted">
+                                Browse FAQs
+                            </Link>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-3 animate-fade-up animate-delay-500">
+                            <div className="surface-card p-4">
+                                <p className="text-2xl font-display font-bold text-slate-900">24/7</p>
+                                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                                    Availability
+                                </p>
+                            </div>
+                            <div className="surface-card p-4">
+                                <p className="text-2xl font-display font-bold text-slate-900">API + UI</p>
+                                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                                    Full Stack Delivery
+                                </p>
+                            </div>
+                            <div className="surface-card p-4">
+                                <p className="text-2xl font-display font-bold text-slate-900">Secure</p>
+                                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                                    Admin Controls
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="pt-8 flex items-center justify-center lg:justify-start space-x-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
-                        <img
-                            src="/images/Logo.png"
-                            className="h-12 w-auto"
-                            alt="GSU Logo"
-                        />
-                        <div className="h-8 w-px bg-slate-200"></div>
-                        <span className="text-sm font-bold uppercase tracking-widest text-slate-400">
-                            Official GSU Platform
-                        </span>
-                    </div>
-                </div>
+                    <div className="glass-panel relative overflow-hidden p-6 sm:p-8 animate-fade-up animate-delay-200">
+                        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-cyan-200/70 blur-2xl" />
+                        <div className="pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full bg-orange-200/70 blur-2xl" />
+                        <div className="relative space-y-5">
+                            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                                SmartAssist Preview
+                            </p>
+                            <div className="space-y-4">
+                                <div className="max-w-xs rounded-2xl rounded-bl-none bg-white p-4 text-sm text-slate-700 shadow-lg shadow-slate-200/50">
+                                    What are the admission requirements for undergraduate programmes?
+                                </div>
+                                <div className="ml-auto max-w-xs rounded-2xl rounded-tr-none bg-slate-900 p-4 text-sm text-white shadow-lg shadow-slate-300/40">
+                                    You will need ordinary level passes plus programme-specific entry criteria. I can show the latest admissions guidance by faculty.
+                                </div>
+                                <div className="max-w-[11rem] rounded-2xl rounded-bl-none border border-slate-200 bg-white p-3 text-sm text-slate-500">
+                                    Would you like fees and application dates too?
+                                </div>
+                            </div>
 
-                <div className="flex-1 relative animate-fade-in delay-300">
-                    <div className="absolute -inset-4 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[2rem] opacity-10 blur-2xl"></div>
-                    <div className="relative bg-white border border-slate-100 rounded-[2rem] shadow-2xl p-4 overflow-hidden">
-                        <div className="bg-slate-50 rounded-[1.5rem] p-8 space-y-6">
-                            <div className="flex items-start space-x-3">
-                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                    <svg
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                        className="w-5 h-5"
-                                    >
-                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                                <div className="bg-white border border-slate-100 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-xs">
-                                    <p className="text-sm text-slate-600 font-medium">
-                                        Hi! I'm interested in the Engineering
-                                        programmes. Can you help?
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-start justify-end space-x-3">
-                                <div className="bg-blue-600 p-4 rounded-2xl rounded-tr-none shadow-lg shadow-blue-100 max-w-xs">
-                                    <p className="text-sm text-white font-medium">
-                                        Absolutely! Gwanda State University
-                                        offers a Bachelor of Science (Hons) in
-                                        Mining and Geomatics. Would you like to
-                                        see the entry requirements?
-                                    </p>
-                                </div>
-                                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-lg">
-                                    S
-                                </div>
-                            </div>
-                            <div className="flex items-start space-x-3">
-                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                    <svg
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                        className="w-5 h-5"
-                                    >
-                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                                <div className="bg-white border border-slate-100 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-xs animate-pulse">
-                                    <div className="h-2 w-12 bg-slate-100 rounded mb-2"></div>
-                                    <div className="h-2 w-full bg-slate-50 rounded"></div>
+                            <div className="rounded-2xl border border-slate-200 bg-white/95 p-4">
+                                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                                    Coverage Areas
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {[
+                                        "Admissions",
+                                        "Fees",
+                                        "Programmes",
+                                        "Academic Calendar",
+                                        "Library",
+                                        "ICT Support",
+                                    ].map((item) => (
+                                        <span key={item} className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                                            {item}
+                                        </span>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -170,68 +173,52 @@ export default function Welcome({ auth }) {
                 </div>
             </header>
 
-            {/* Features Grid */}
-            <section className="bg-slate-50 py-24 px-6">
-                <div className="max-w-7xl mx-auto space-y-16">
-                    <div className="text-center space-y-4">
-                        <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-                            Everything at your fingertips
-                        </h2>
-                        <p className="text-slate-500 max-w-2xl mx-auto">
-                            SmartAssist is integrated across all university
-                            platforms to provide you with the most accurate and
-                            up-to-date information.
-                        </p>
+            <section className="section-shell pb-12 md:pb-16">
+                <div className="surface-card p-6 sm:p-8 lg:p-10">
+                    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <p className="tag-chip">Assessment Alignment</p>
+                            <h2 className="mt-3 font-display text-3xl font-bold text-slate-900 md:text-4xl">
+                                Built around the practical brief
+                            </h2>
+                        </div>
+                        <Link href={route("chat")} className="btn-muted">
+                            Try the Assistant
+                        </Link>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {[
-                            {
-                                title: "Instant FAQ Search",
-                                desc: "Access a vast database of verified university information instantly.",
-                                icon: "📚",
-                            },
-                            {
-                                title: "24/7 AI Support",
-                                desc: "Our intelligent bot handles complex queries when staff aren't available.",
-                                icon: "🤖",
-                            },
-                            {
-                                title: "Academic Registry",
-                                desc: "Get information on registration, transcripts, and graduation requirements.",
-                                icon: "🎓",
-                            },
-                        ].map((f, i) => (
-                            <div
-                                key={i}
-                                className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group"
-                            >
-                                <div className="text-4xl mb-6 group-hover:scale-125 transition-transform">
-                                    {f.icon}
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-2">
-                                    {f.title}
-                                </h3>
-                                <p className="text-slate-500 text-sm leading-relaxed">
-                                    {f.desc}
-                                </p>
-                            </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                        {capabilityCards.map((card) => (
+                            <article key={card.title} className="rounded-2xl border border-slate-200 bg-white p-5">
+                                <h3 className="font-display text-xl font-semibold text-slate-900">{card.title}</h3>
+                                <p className="mt-3 text-sm leading-relaxed text-slate-600">{card.detail}</p>
+                            </article>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer className="py-12 border-t border-slate-100 text-center space-y-4">
-                <div className="flex items-center justify-center space-x-2">
-                    <ApplicationLogo className="h-6 w-auto fill-current text-slate-300" />
-                    <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">
-                        Gwanda State University
-                    </span>
+            <section className="section-shell pb-20">
+                <div className="grid gap-5 lg:grid-cols-3">
+                    {journeySteps.map((step) => (
+                        <article key={step.id} className="surface-card p-6">
+                            <p className="text-sm font-bold text-cyan-700">Step {step.id}</p>
+                            <h3 className="mt-2 font-display text-2xl font-bold text-slate-900">{step.title}</h3>
+                            <p className="mt-3 text-sm leading-relaxed text-slate-600">{step.detail}</p>
+                        </article>
+                    ))}
                 </div>
-                <p className="text-xs text-slate-400">
-                    &copy; {new Date().getFullYear()} GSU SmartAssist. For
-                    academic excellence.{" "}
-                </p>
+            </section>
+
+            <footer className="border-t border-white/80 bg-white/70 py-8">
+                <div className="section-shell flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+                    <div className="flex items-center gap-2">
+                        <ApplicationLogo className="h-8 w-8" />
+                        <p className="text-sm font-semibold text-slate-700">GSU SmartAssist</p>
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                        © {new Date().getFullYear()} Gwanda State University
+                    </p>
+                </div>
             </footer>
         </div>
     );

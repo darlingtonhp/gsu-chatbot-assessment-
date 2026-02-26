@@ -1,226 +1,243 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Head, Link } from "@inertiajs/react";
 import axios from "axios";
 import ApplicationLogo from "@/Components/ApplicationLogo";
+
+const quickPrompts = [
+    "What programmes are currently available at GSU?",
+    "How do I apply for admission?",
+    "Where can I find fee payment details?",
+    "How do I contact ICT support?",
+];
 
 export default function Index() {
     const [messages, setMessages] = useState([
         {
             id: 1,
-            text: "Welcome to Gwanda State University! I am SmartAssist. How can I help you today?",
             sender: "bot",
-            time: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
+            text: "Welcome to GSU SmartAssist. Ask me about admissions, programmes, fees, library services, and ICT support.",
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
     ]);
     const [input, setInput] = useState("");
-    const [sessionId] = useState(() => Math.random().toString(36).substring(7));
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    const [sessionId] = useState(() => {
+        if (typeof window === "undefined") {
+            return Math.random().toString(36).slice(2, 10);
+        }
+
+        const existing = window.localStorage.getItem("gsu_chat_session");
+        if (existing) {
+            return existing;
+        }
+
+        const generated = `gsu_${Math.random().toString(36).slice(2, 10)}`;
+        window.localStorage.setItem("gsu_chat_session", generated);
+        return generated;
+    });
+
+    const conversationCount = useMemo(
+        () => messages.filter((message) => message.sender === "user").length,
+        [messages],
+    );
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages, loading]);
 
-    const handleSend = async (e) => {
-        e.preventDefault();
-        if (!input.trim() || loading) return;
+    const appendMessage = (payload) => {
+        setMessages((previous) => [
+            ...previous,
+            {
+                id: Date.now() + Math.floor(Math.random() * 100),
+                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                ...payload,
+            },
+        ]);
+    };
 
-        const userMsg = {
-            id: Date.now(),
-            text: input,
-            sender: "user",
-            time: new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
-        };
-        setMessages((prev) => [...prev, userMsg]);
+    const sendMessage = async (rawMessage) => {
+        const message = rawMessage.trim();
+        if (!message || loading) {
+            return;
+        }
+
+        appendMessage({ sender: "user", text: message });
         setInput("");
         setLoading(true);
 
         try {
             const response = await axios.post("/api/chat", {
-                message: input,
+                message,
                 session_id: sessionId,
             });
 
-            const botMsg = {
-                id: Date.now() + 1,
-                text: response.data.response,
+            appendMessage({
                 sender: "bot",
-                time: new Date().toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }),
-            };
-            setMessages((prev) => [...prev, botMsg]);
+                text:
+                    response?.data?.response ||
+                    "I could not process that request. Please try again.",
+            });
         } catch (error) {
-            console.error("Chat error:", error);
-            const errorMsg = {
-                id: Date.now() + 1,
-                text: "I'm having a bit of a technical glitch. Could you please try again or check our FAQs?",
+            appendMessage({
                 sender: "bot",
-                time: new Date().toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }),
-            };
-            setMessages((prev) => [...prev, errorMsg]);
+                text: "I ran into a temporary issue. Please try again in a moment or check the FAQ library.",
+            });
         } finally {
             setLoading(false);
         }
     };
 
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        await sendMessage(input);
+    };
+
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 selection:bg-blue-600 selection:text-white">
-            <Head title="GSU SmartAssist - Chat Support" />
+        <div className="min-h-screen pb-8">
+            <Head title="GSU SmartAssist - Live Chat" />
 
-            <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden flex flex-col h-[85vh] relative animate-fade-in">
-                {/* Header */}
-                <header className="bg-white border-b border-slate-50 px-8 py-6 flex items-center justify-between z-10">
-                    <div className="flex items-center space-x-4">
-                        <Link
-                            href="/"
-                            className="hover:scale-105 transition-transform"
-                        >
-                            <ApplicationLogo className="h-10 w-auto text-blue-600" />
+            <div className="section-shell pt-6">
+                <div className="surface-card flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6">
+                    <div className="flex items-center gap-3">
+                        <Link href="/" className="flex items-center gap-3">
+                            <ApplicationLogo className="h-10 w-10" />
+                            <div>
+                                <p className="font-display text-lg font-bold text-slate-900">GSU SmartAssist</p>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                                    Live Support Assistant
+                                </p>
+                            </div>
                         </Link>
-                        <div>
-                            <h1 className="text-xl font-black text-slate-900 tracking-tight">
-                                GSU{" "}
-                                <span className="text-blue-600">
-                                    SmartAssist
-                                </span>
-                            </h1>
-                            <div className="flex items-center space-x-2">
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                </span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    Online • Intelligent
-                                </span>
-                            </div>
-                        </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                        <Link
-                            href={route("faqs")}
-                            className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
-                        >
-                            FAQs
+                    <div className="flex items-center gap-2">
+                        <Link href={route("faqs")} className="btn-muted !py-2.5">
+                            FAQ Library
                         </Link>
-                        <div className="h-8 w-px bg-slate-100"></div>
-                        <button className="text-slate-300 hover:text-slate-600">
-                            <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                />
-                            </svg>
-                        </button>
-                    </div>
-                </header>
-
-                {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto px-8 py-10 space-y-8 bg-[#FDFDFF] scroll-smooth">
-                    {messages.map((msg) => (
-                        <div
-                            key={msg.id}
-                            className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} animate-slide-up`}
-                        >
-                            <div
-                                className={`flex flex-col space-y-2 max-w-[75%] ${msg.sender === "user" ? "items-end" : "items-start"}`}
-                            >
-                                <div
-                                    className={`p-5 rounded-[2rem] text-sm font-medium leading-relaxed ${
-                                        msg.sender === "user"
-                                            ? "bg-blue-600 text-white rounded-tr-none shadow-xl shadow-blue-100"
-                                            : "bg-white border border-slate-100 shadow-sm text-slate-700 rounded-tl-none ring-4 ring-slate-50/50"
-                                    }`}
-                                >
-                                    {msg.text}
-                                </div>
-                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest px-2">
-                                    {msg.time}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                    {loading && (
-                        <div className="flex justify-start animate-fade-in">
-                            <div className="flex flex-col items-start space-y-2">
-                                <div className="bg-white border border-slate-100 p-5 rounded-[2rem] rounded-tl-none shadow-sm flex space-x-1.5 ring-4 ring-slate-50/50">
-                                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-duration:800ms]"></div>
-                                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-duration:800ms] [animation-delay:200ms]"></div>
-                                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-duration:800ms] [animation-delay:400ms]"></div>
-                                </div>
-                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest px-2">
-                                    Assistant is typing...
-                                </span>
-                            </div>
-                        </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input Area */}
-                <div className="p-8 bg-white border-t border-slate-50">
-                    <form
-                        onSubmit={handleSend}
-                        className="relative flex items-center"
-                    >
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="Type reaching for answers..."
-                            className="w-full bg-slate-50 border-none rounded-[1.5rem] pl-6 pr-20 py-5 font-medium text-slate-700 placeholder:text-slate-300 focus:ring-2 focus:ring-blue-600/20 transition-all outline-none"
-                        />
-                        <button
-                            type="submit"
-                            disabled={loading || !input.trim()}
-                            className="absolute right-2 px-6 py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-30 disabled:shadow-none active:scale-95"
-                        >
-                            <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2.5}
-                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                                />
-                            </svg>
-                        </button>
-                    </form>
-                    <div className="mt-4 flex items-center justify-between">
-                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                            GSU Unified Support Platform
-                        </p>
-                        <p className="text-[10px] text-slate-300 font-medium">
-                            Messages are logged for quality assurance.
-                        </p>
+                        <Link href={route("login")} className="btn-brand !py-2.5">
+                            Admin Login
+                        </Link>
                     </div>
                 </div>
             </div>
+
+            <main className="section-shell mt-6 grid gap-6 lg:grid-cols-[0.34fr,0.66fr]">
+                <aside className="surface-card h-fit p-5 sm:p-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="font-display text-2xl font-bold text-slate-900">Session Snapshot</h2>
+                        <span className="tag-chip">Active</span>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">Session ID</p>
+                            <p className="mt-2 truncate font-mono text-sm font-semibold text-slate-700">{sessionId}</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">Questions Asked</p>
+                            <p className="mt-2 text-2xl font-display font-bold text-slate-900">{conversationCount}</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Quick Prompts</p>
+                        <div className="mt-3 space-y-2">
+                            {quickPrompts.map((prompt) => (
+                                <button
+                                    key={prompt}
+                                    type="button"
+                                    onClick={() => sendMessage(prompt)}
+                                    disabled={loading}
+                                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:border-cyan-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {prompt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </aside>
+
+                <section className="glass-panel flex h-[74vh] min-h-[560px] flex-col overflow-hidden">
+                    <div className="border-b border-slate-200/70 bg-white/75 px-5 py-4 sm:px-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="font-display text-xl font-bold text-slate-900">Conversation</p>
+                                <p className="text-sm text-slate-600">Real-time AI-assisted support for GSU services.</p>
+                            </div>
+                            <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-emerald-700">
+                                <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                                Online
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="soft-scrollbar flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+                        {messages.map((message, index) => (
+                            <article
+                                key={message.id}
+                                className={`flex animate-fade-up ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                                style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
+                            >
+                                <div className={`max-w-[82%] sm:max-w-[75%] ${message.sender === "user" ? "items-end" : "items-start"}`}>
+                                    <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                        <span>{message.sender === "user" ? "You" : "SmartAssist"}</span>
+                                        <span>•</span>
+                                        <span>{message.time}</span>
+                                    </div>
+                                    <div
+                                        className={`rounded-3xl px-4 py-3 text-sm leading-relaxed shadow-lg ${
+                                            message.sender === "user"
+                                                ? "rounded-tr-md bg-slate-900 text-white shadow-slate-300/50"
+                                                : "rounded-tl-md border border-slate-200 bg-white text-slate-700 shadow-slate-200/60"
+                                        }`}
+                                    >
+                                        {message.text}
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+
+                        {loading && (
+                            <div className="flex justify-start animate-fade-up">
+                                <div className="rounded-3xl rounded-tl-md border border-slate-200 bg-white px-4 py-3 shadow-lg shadow-slate-200/60">
+                                    <div className="flex gap-1.5">
+                                        <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-500" />
+                                        <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-500 [animation-delay:180ms]" />
+                                        <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-500 [animation-delay:360ms]" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    <div className="border-t border-slate-200/70 bg-white/75 p-4 sm:p-5">
+                        <form onSubmit={handleSubmit} className="flex items-center gap-3">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(event) => setInput(event.target.value)}
+                                placeholder="Ask about admissions, fees, programmes, or ICT support..."
+                                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                                disabled={loading}
+                            />
+                            <button
+                                type="submit"
+                                disabled={loading || input.trim() === ""}
+                                className="btn-brand min-w-[108px] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Send
+                            </button>
+                        </form>
+                        <p className="mt-2 text-xs text-slate-500">
+                            Messages are securely logged to help improve FAQ coverage and response quality.
+                        </p>
+                    </div>
+                </section>
+            </main>
         </div>
     );
 }

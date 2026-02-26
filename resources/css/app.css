@@ -1,3 +1,111 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --brand-ink: #0f2742;
+        --brand-cyan: #0f766e;
+        --brand-coral: #ea580c;
+        --brand-gold: #d97706;
+        --brand-fog: #f3f8ff;
+        --brand-mint: #ecfeff;
+    }
+
+    html,
+    body,
+    #app {
+        min-height: 100%;
+    }
+
+    body {
+        color: rgb(15 23 42);
+        font-family: "Manrope", "Segoe UI", sans-serif;
+        background-color: #f7fafc;
+        background-image:
+            radial-gradient(circle at 8% 0%, rgba(14, 165, 233, 0.14), transparent 34%),
+            radial-gradient(circle at 95% 5%, rgba(249, 115, 22, 0.12), transparent 32%),
+            radial-gradient(circle at 30% 88%, rgba(20, 184, 166, 0.1), transparent 28%),
+            linear-gradient(180deg, #f7fbff 0%, #ffffff 45%, #f8fafc 100%);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: "Sora", "Manrope", sans-serif;
+        letter-spacing: -0.02em;
+    }
+}
+
+@layer components {
+    .section-shell {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .surface-card {
+        @apply rounded-3xl border border-white/70 bg-white/85 shadow-xl shadow-slate-200/50 backdrop-blur;
+    }
+
+    .glass-panel {
+        @apply rounded-3xl border border-cyan-100/70 bg-white/70 shadow-2xl shadow-cyan-100/40 backdrop-blur-xl;
+    }
+
+    .tag-chip {
+        @apply inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500;
+    }
+
+    .btn-brand {
+        @apply inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-slate-800;
+    }
+
+    .btn-muted {
+        @apply inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900;
+    }
+
+    .text-gradient {
+        background-image: linear-gradient(120deg, #0f766e 0%, #0ea5e9 45%, #ea580c 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+}
+
+@layer utilities {
+    .animate-delay-100 {
+        animation-delay: 100ms;
+    }
+
+    .animate-delay-200 {
+        animation-delay: 200ms;
+    }
+
+    .animate-delay-300 {
+        animation-delay: 300ms;
+    }
+
+    .animate-delay-500 {
+        animation-delay: 500ms;
+    }
+
+    .soft-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+    }
+
+    .soft-scrollbar::-webkit-scrollbar {
+        height: 10px;
+        width: 10px;
+    }
+
+    .soft-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.55);
+        border: 2px solid transparent;
+        border-radius: 999px;
+        background-clip: padding-box;
+    }
+}

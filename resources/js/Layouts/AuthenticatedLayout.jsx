@@ -1,284 +1,221 @@
 import ApplicationLogo from "@/Components/ApplicationLogo";
-import Dropdown from "@/Components/Dropdown";
-import NavLink from "@/Components/NavLink";
-import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+const navItems = [
+    {
+        group: "Operations",
+        links: [
+            {
+                label: "Dashboard",
+                routeName: "dashboard",
+                icon: (
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M3 10.75 12 3l9 7.75v8a1.75 1.75 0 0 1-1.75 1.75h-3.5A1.75 1.75 0 0 1 14 18.75V15a2 2 0 0 0-4 0v3.75a1.75 1.75 0 0 1-1.75 1.75h-3.5A1.75 1.75 0 0 1 3 18.75z"
+                    />
+                ),
+            },
+            {
+                label: "Knowledge Base",
+                routeName: "admin.faqs",
+                icon: (
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5m0-15v15m0-15A2.5 2.5 0 0 1 6.5 3"
+                    />
+                ),
+            },
+            {
+                label: "Interaction Logs",
+                routeName: "admin.logs",
+                icon: (
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M4 5h16M4 12h16M4 19h10"
+                    />
+                ),
+            },
+        ],
+    },
+    {
+        group: "Account",
+        links: [
+            {
+                label: "Profile",
+                routeName: "profile.edit",
+                icon: (
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Zm5 14a8.5 8.5 0 0 0-16.99 0"
+                    />
+                ),
+            },
+        ],
+    },
+];
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
+    const [openMobileMenu, setOpenMobileMenu] = useState(false);
 
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+    const initials = useMemo(() => {
+        if (!user?.name) {
+            return "A";
+        }
+
+        const parts = user.name.trim().split(" ").filter(Boolean);
+        return `${parts[0][0]}${parts[1] ? parts[1][0] : ""}`.toUpperCase();
+    }, [user?.name]);
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            {/* Sidebar */}
-            <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white min-h-screen fixed left-0 top-0 z-50 transition-all duration-300">
-                <div className="p-6 flex items-center space-x-3 border-b border-slate-800">
-                    <Link href="/">
-                        <ApplicationLogo className="h-8 w-auto fill-current text-blue-400" />
-                    </Link>
-                    <span className="font-bold text-lg tracking-tight">
-                        SmartAssist
-                    </span>
-                </div>
+        <div className="min-h-screen">
+            <div className="pointer-events-none fixed right-0 top-0 h-80 w-80 rounded-full bg-cyan-200/30 blur-3xl" />
+            <div className="pointer-events-none fixed -left-20 bottom-0 h-96 w-96 rounded-full bg-orange-200/30 blur-3xl" />
 
-                <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest px-2 mb-4">
-                        Main Menu
-                    </div>
-
-                    <NavLink
-                        href={route("dashboard")}
-                        active={route().current("dashboard")}
-                        className="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 group"
-                    >
-                        <svg
-                            className={`h-5 w-5 ${route().current("dashboard") ? "text-blue-400" : "text-slate-400 group-hover:text-white"}`}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                            />
-                        </svg>
-                        <span
-                            className={
-                                route().current("dashboard")
-                                    ? "text-white font-semibold"
-                                    : "text-slate-300 group-hover:text-white"
-                            }
-                        >
-                            Dashboard
-                        </span>
-                    </NavLink>
-
-                    <NavLink
-                        href={route("admin.faqs")}
-                        active={route().current("admin.faqs")}
-                        className="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 group"
-                    >
-                        <svg
-                            className={`h-5 w-5 ${route().current("admin.faqs") ? "text-blue-400" : "text-slate-400 group-hover:text-white"}`}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                            />
-                        </svg>
-                        <span
-                            className={
-                                route().current("admin.faqs")
-                                    ? "text-white font-semibold"
-                                    : "text-slate-300 group-hover:text-white"
-                            }
-                        >
-                            Knowledge Base
-                        </span>
-                    </NavLink>
-
-                    <NavLink
-                        href={route("admin.logs")}
-                        active={route().current("admin.logs")}
-                        className="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 group"
-                    >
-                        <svg
-                            className={`h-5 w-5 ${route().current("admin.logs") ? "text-blue-400" : "text-slate-400 group-hover:text-white"}`}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                        </svg>
-                        <span
-                            className={
-                                route().current("admin.logs")
-                                    ? "text-white font-semibold"
-                                    : "text-slate-300 group-hover:text-white"
-                            }
-                        >
-                            Interaction Logs
-                        </span>
-                    </NavLink>
-
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest px-2 mt-8 mb-4">
-                        System
-                    </div>
-
-                    <NavLink
-                        href={route("profile.edit")}
-                        active={route().current("profile.edit")}
-                        className="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800 group"
-                    >
-                        <svg
-                            className={`h-5 w-5 ${route().current("profile.edit") ? "text-blue-400" : "text-slate-400 group-hover:text-white"}`}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                            />
-                        </svg>
-                        <span
-                            className={
-                                route().current("profile.edit")
-                                    ? "text-white font-semibold"
-                                    : "text-slate-300 group-hover:text-white"
-                            }
-                        >
-                            Profile
-                        </span>
-                    </NavLink>
-                </nav>
-
-                <div className="p-4 bg-slate-800/50">
-                    <div className="flex items-center space-x-3 mb-4 px-2">
-                        <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white shadow-lg">
-                            {user.name.charAt(0)}
-                        </div>
-                        <div className="overflow-hidden">
-                            <p className="text-sm font-bold truncate">
-                                {user.name}
-                            </p>
-                            <p className="text-xs text-slate-400 truncate uppercase tracking-tighter">
-                                {user.role || "Administrator"}
+            <div className="relative flex min-h-screen">
+                <aside className="hidden w-[290px] shrink-0 border-r border-white/80 bg-white/80 px-5 py-6 backdrop-blur-xl lg:flex lg:flex-col">
+                    <Link href="/" className="flex items-center gap-3 rounded-2xl px-2 py-2">
+                        <ApplicationLogo className="h-11 w-11" />
+                        <div>
+                            <p className="font-display text-lg font-bold text-slate-900">GSU Admin</p>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                                SmartAssist Console
                             </p>
                         </div>
-                    </div>
-                    <Link
-                        href={route("logout")}
-                        method="post"
-                        as="button"
-                        className="w-full flex items-center justify-center space-x-2 bg-slate-800 py-3 rounded-xl hover:bg-red-500/10 hover:text-red-400 transition-all text-slate-400 text-sm font-semibold"
-                    >
-                        <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                            />
-                        </svg>
-                        <span>Logout</span>
                     </Link>
-                </div>
-            </aside>
 
-            {/* Mobile Header */}
-            <div className="md:hidden w-full bg-white border-b p-4 flex items-center justify-between sticky top-0 z-40">
-                <div className="flex items-center space-x-2">
-                    <ApplicationLogo className="h-8 w-auto fill-current text-blue-600" />
-                    <span className="font-bold text-lg text-slate-900">
-                        GSU Admin
-                    </span>
-                </div>
-                <button
-                    onClick={() =>
-                        setShowingNavigationDropdown(!showingNavigationDropdown)
-                    }
-                    className="p-2 text-slate-600"
-                >
-                    <svg
-                        className={`h-6 w-6 transition-transform duration-300 ${showingNavigationDropdown ? "rotate-90" : ""}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 6h16M4 12h16m-7 6h7"
-                        />
-                    </svg>
-                </button>
-            </div>
+                    <nav className="mt-8 flex-1 space-y-6 overflow-y-auto pr-1 soft-scrollbar">
+                        {navItems.map((section) => (
+                            <div key={section.group}>
+                                <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                    {section.group}
+                                </p>
+                                <div className="space-y-1">
+                                    {section.links.map((item) => {
+                                        const active = route().current(item.routeName);
 
-            {/* Mobile Nav Dropdown */}
-            <div
-                className={`md:hidden fixed inset-x-0 bg-white border-b z-30 transition-all duration-300 ease-in-out ${showingNavigationDropdown ? "top-16 opacity-100" : "-top-full opacity-0"}`}
-            >
-                <div className="p-4 space-y-2">
-                    <ResponsiveNavLink
-                        href={route("dashboard")}
-                        active={route().current("dashboard")}
-                    >
-                        Dashboard
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink
-                        href={route("admin.faqs")}
-                        active={route().current("admin.faqs")}
-                    >
-                        Knowledge Base
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink
-                        href={route("admin.logs")}
-                        active={route().current("admin.logs")}
-                    >
-                        Interaction Logs
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink
-                        href={route("profile.edit")}
-                        active={route().current("profile.edit")}
-                    >
-                        Profile
-                    </ResponsiveNavLink>
-                </div>
-            </div>
+                                        return (
+                                            <Link
+                                                key={item.routeName}
+                                                href={route(item.routeName)}
+                                                className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition ${
+                                                    active
+                                                        ? "bg-slate-900 text-white shadow-lg shadow-slate-300/40"
+                                                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                                }`}
+                                            >
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    {item.icon}
+                                                </svg>
+                                                <span>{item.label}</span>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </nav>
 
-            {/* Content Area */}
-            <div className="flex-1 md:ms-64 transition-all duration-300 min-h-screen flex flex-col">
-                {header && (
-                    <header className="bg-white border-b border-gray-100 flex items-center justify-between px-8 py-6 sticky top-0 z-30">
-                        <div>{header}</div>
-                        <div className="hidden md:flex items-center space-x-4">
-                            <div className="flex flex-col items-end">
-                                <span className="text-sm font-bold text-slate-900">
-                                    {user.name}
-                                </span>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none">
+                    <div className="mt-6 space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white">
+                                {initials}
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-slate-900">{user.name}</p>
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                                     {user.role || "Admin"}
-                                </span>
-                            </div>
-                            <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200">
-                                {user.name.charAt(0)}
+                                </p>
                             </div>
                         </div>
-                    </header>
-                )}
+                        <Link
+                            href={route("logout")}
+                            method="post"
+                            as="button"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                        >
+                            Sign Out
+                        </Link>
+                    </div>
+                </aside>
 
-                <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
-                    {children}
-                </main>
+                <div className="flex min-h-screen w-full flex-col">
+                    <div className="sticky top-0 z-40 border-b border-white/80 bg-white/80 backdrop-blur-xl lg:hidden">
+                        <div className="section-shell flex items-center justify-between py-3">
+                            <Link href="/" className="flex items-center gap-2">
+                                <ApplicationLogo className="h-9 w-9" />
+                                <span className="font-display text-lg font-bold text-slate-900">GSU Admin</span>
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={() => setOpenMobileMenu((current) => !current)}
+                                className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600"
+                            >
+                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        </div>
 
-                <footer className="p-8 text-center text-xs text-slate-400 border-t border-gray-100">
-                    &copy; {new Date().getFullYear()} Gwanda State University
-                    SmartAssist. Built with ❤️ for GSU.
-                </footer>
+                        {openMobileMenu && (
+                            <div className="section-shell pb-4">
+                                <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
+                                    {navItems.flatMap((section) => section.links).map((item) => (
+                                        <Link
+                                            key={item.routeName}
+                                            href={route(item.routeName)}
+                                            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${
+                                                route().current(item.routeName)
+                                                    ? "bg-slate-900 text-white"
+                                                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                            }`}
+                                            onClick={() => setOpenMobileMenu(false)}
+                                        >
+                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                {item.icon}
+                                            </svg>
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    ))}
+                                    <Link
+                                        href={route("logout")}
+                                        method="post"
+                                        as="button"
+                                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-left text-sm font-semibold text-slate-600"
+                                    >
+                                        Sign Out
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {header && (
+                        <header className="section-shell mt-5 lg:mt-7">
+                            <div className="surface-card flex items-center justify-between gap-4 px-5 py-5 sm:px-6">{header}</div>
+                        </header>
+                    )}
+
+                    <main className="section-shell my-5 flex-1 lg:my-7">{children}</main>
+
+                    <footer className="section-shell pb-7">
+                        <div className="flex flex-col items-center justify-between gap-2 rounded-2xl border border-white/80 bg-white/70 px-4 py-3 text-center sm:flex-row sm:text-left">
+                            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                © {new Date().getFullYear()} GSU SmartAssist Admin
+                            </p>
+                            <p className="text-xs text-slate-500">Secure knowledge management and chatbot monitoring.</p>
+                        </div>
+                    </footer>
+                </div>
             </div>
         </div>
     );

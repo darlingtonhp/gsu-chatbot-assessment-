@@ -16,13 +16,15 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'admin', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
+Route::middleware(['auth', 'admin'])->group(function () {
     // Admin Pages
     Route::get('/admin/knowledge-base', function () {
         return Inertia::render('Admin/KnowledgeBase');
@@ -39,7 +41,7 @@ Route::get('/chat', function () {
 })->name('chat');
 
 Route::get('/faqs', function () {
-    return Inertia::render('FAQ/Index');
+    return Inertia::render('FAQ/Library');
 })->name('faqs');
 
 require __DIR__ . '/auth.php';
