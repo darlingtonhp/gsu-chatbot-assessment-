@@ -29,6 +29,12 @@ class ChatService
         'nd' => 'Wamukelekile kuGSU SmartAssist. Buza imibuzo ephathelene leGwanda State University, njengokwamukelwa, izifundo, imali, ilabhulali, kumbe i-ICT support.',
     ];
 
+    protected const SMALL_TALK_RESPONSES = [
+        'en' => "I'm doing well, thank you. I'm here to help with GSU questions whenever you're ready.",
+        'sn' => 'Ndiri bho, ndatenda. Ndiri pano kukubatsirai nemibvunzo yeGSU chero nguva.',
+        'nd' => 'Ngikhona, ngiyabonga. Ngilapha ukukunceda ngemibuzo yeGSU noma nini.',
+    ];
+
     protected const GSU_SCOPE_KEYWORDS = [
         'gsu',
         'gwanda',
@@ -71,6 +77,9 @@ class ChatService
     protected const SHONA_HINTS = [
         'mhoro',
         'makadii',
+        'munofara',
+        'wakadini',
+        'uribho',
         'ndapota',
         'zvinodiwa',
         'yunivhesiti',
@@ -108,6 +117,8 @@ class ChatService
 
         if ($this->isGreetingOnly($message)) {
             $response = $this->getGreetingResponse($language);
+        } elseif ($this->isSmallTalk($message)) {
+            $response = $this->getAiResponse($message, $recentHistory, $language, true);
         } elseif (! $this->isWithinGsuScope($searchContext, $recentHistory)) {
             $response = $this->getOutOfScopeResponse($language);
         } else {
@@ -274,12 +285,19 @@ class ChatService
     /**
      * Call OpenAI with conversational context when available.
      */
-    protected function getAiResponse(string $message, array $recentHistory, string $language = 'en'): string
+    protected function getAiResponse(
+        string $message,
+        array $recentHistory,
+        string $language = 'en',
+        bool $allowSmallTalk = false
+    ): string
     {
         $apiKey = $this->getOpenAiKey();
 
         if (! $apiKey) {
-            return $this->getFallbackResponse($language);
+            return $allowSmallTalk
+                ? $this->getSmallTalkResponse($language)
+                : $this->getFallbackResponse($language);
         }
 
         $historyContext = collect($recentHistory)
@@ -289,7 +307,7 @@ class ChatService
         $messages = [
             [
                 'role' => 'system',
-                'content' => 'You are GSU SmartAssist for Gwanda State University (GSU). You must only answer GSU-related questions (admissions, programmes, fees, academic calendar, library, ICT support, campus services). If the user asks anything outside GSU scope, politely refuse and redirect them to ask a GSU-specific question. Always answer in '.$this->getLanguageName($language).'. Keep answers concise and factual.',
+                'content' => 'You are GSU SmartAssist for Gwanda State University (GSU). Your primary role is to answer GSU-related questions (admissions, programmes, fees, academic calendar, library, ICT support, campus services). You may respond briefly to social small-talk (greetings, \"how are you\", thanks) in a friendly way, then gently invite a GSU question. For non-social, non-GSU questions, politely refuse and redirect to GSU topics. Always answer in '.$this->getLanguageName($language).'. Keep answers concise and factual.',
             ],
         ];
 
@@ -308,23 +326,25 @@ class ChatService
         try {
             $openAi = new OpenAi($apiKey);
             $chat = $openAi->chat([
-                'model' => 'gpt-3.5-turbo',
+                'model' => $this->getOpenAiModel(),
                 'messages' => $messages,
                 'temperature' => 0.4,
                 'max_tokens' => 400,
             ]);
 
-            $decoded = json_decode($chat, true);
-            $content = $decoded['choices'][0]['message']['content'] ?? null;
-
-            if (is_string($content) && trim($content) !== '') {
-                return trim($content);
+            $content = $this->extractOpenAiMessageContent($chat, 'OpenAI Error');
+            if ($content !== null) {
+                return $content;
             }
 
-            return "I'm sorry, I'm having trouble processing that right now. Please try again or contact ICTS.";
+            return $allowSmallTalk
+                ? $this->getSmallTalkResponse($language)
+                : "I'm sorry, I'm having trouble processing that right now. Please try again or contact ICTS.";
         } catch (Exception $e) {
             Log::error('OpenAI Error: '.$e->getMessage());
-            return "I'm technically unable to answer that at the moment. Please refer to our FAQs or contact support.";
+            return $allowSmallTalk
+                ? $this->getSmallTalkResponse($language)
+                : "I'm technically unable to answer that at the moment. Please refer to our FAQs or contact support.";
         }
     }
 
@@ -337,6 +357,13 @@ class ChatService
         }
 
         return $apiKey;
+    }
+
+    protected function getOpenAiModel(): string
+    {
+        $model = trim((string) config('services.openai.model'));
+
+        return $model !== '' ? $model : 'gpt-4o-mini';
     }
 
     protected function getLanguageName(string $language): string
@@ -383,6 +410,51 @@ class ChatService
         return $score;
     }
 
+    protected function extractOpenAiMessageContent(string $chatResponse, string $logContext): ?string
+    {
+        $decoded = json_decode($chatResponse, true);
+
+        if (! is_array($decoded)) {
+            Log::error($logContext.': Invalid JSON response from OpenAI.', [
+                'response_preview' => Str::limit($chatResponse, 500),
+            ]);
+            return null;
+        }
+
+        if (isset($decoded['error'])) {
+            $error = is_array($decoded['error'])
+                ? $decoded['error']
+                : ['message' => (string) $decoded['error']];
+
+            Log::error($logContext.': '.$this->formatOpenAiError($error), [
+                'error' => $error,
+            ]);
+            return null;
+        }
+
+        $content = $decoded['choices'][0]['message']['content'] ?? null;
+
+        if (is_string($content) && trim($content) !== '') {
+            return trim($content);
+        }
+
+        Log::error($logContext.': OpenAI response did not include assistant content.', [
+            'response_keys' => array_keys($decoded),
+        ]);
+
+        return null;
+    }
+
+    protected function formatOpenAiError(array $error): string
+    {
+        $message = trim((string) ($error['message'] ?? 'Unknown API error.'));
+        $type = trim((string) ($error['type'] ?? ''));
+        $code = trim((string) ($error['code'] ?? ''));
+        $meta = implode(', ', array_values(array_filter([$type, $code])));
+
+        return $meta !== '' ? "{$message} ({$meta})" : $message;
+    }
+
     protected function isGreetingOnly(string $message): bool
     {
         $normalized = Str::of(Str::lower($message))
@@ -408,6 +480,39 @@ class ChatService
         ];
 
         return in_array($normalized, $greetings, true);
+    }
+
+    protected function isSmallTalk(string $message): bool
+    {
+        $normalized = Str::of(Str::lower($message))
+            ->replaceMatches('/[^a-z\\s]/', '')
+            ->squish()
+            ->value();
+
+        if ($normalized === '') {
+            return false;
+        }
+
+        $patterns = [
+            'how are you',
+            'how are u',
+            'are you okay',
+            'munofara',
+            'munofara here',
+            'wakadini',
+            'uri bho',
+            'uribho',
+            'linjani',
+            'unjani',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (Str::contains($normalized, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function isWithinGsuScope(string $message, array $recentHistory = []): bool
@@ -460,6 +565,11 @@ class ChatService
         return self::GREETING_RESPONSES[$language] ?? self::GREETING_RESPONSES['en'];
     }
 
+    protected function getSmallTalkResponse(string $language): string
+    {
+        return self::SMALL_TALK_RESPONSES[$language] ?? self::SMALL_TALK_RESPONSES['en'];
+    }
+
     protected function localizeFaqResponse(string $answer, string $language): string
     {
         if ($language === 'en') {
@@ -474,7 +584,7 @@ class ChatService
         try {
             $openAi = new OpenAi($apiKey);
             $chat = $openAi->chat([
-                'model' => 'gpt-3.5-turbo',
+                'model' => $this->getOpenAiModel(),
                 'messages' => [
                     [
                         'role' => 'system',
@@ -489,10 +599,9 @@ class ChatService
                 'max_tokens' => 350,
             ]);
 
-            $decoded = json_decode($chat, true);
-            $content = $decoded['choices'][0]['message']['content'] ?? null;
+            $content = $this->extractOpenAiMessageContent($chat, 'OpenAI Translation Error');
 
-            return is_string($content) && trim($content) !== '' ? trim($content) : $answer;
+            return $content ?? $answer;
         } catch (Exception $e) {
             Log::error('OpenAI Translation Error: '.$e->getMessage());
             return $answer;
