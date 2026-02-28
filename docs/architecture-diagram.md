@@ -15,18 +15,18 @@ graph TD
     WebUI[React Frontend / Inertia.js]
     Backend[Laravel Backend API]
     DB[(MySQL Database)]
-    OpenAI[OpenAI GPT-3.5 API]
+    AIProvider[OpenAI or DeepSeek API]
 
     User -->|Interacts| WebUI
     Admin -->|Manages| WebUI
     WebUI -->|API Requests| Backend
     Backend -->|Queries| DB
-    Backend -->|Fall-back AI| OpenAI
+    Backend -->|Fall-back AI| AIProvider
 ```
 
 ## Backend Architecture
 - **Controllers**: Handle HTTP requests and validation.
-- **Services**: Contain business logic (e.g., `ChatService` handles the logic of searching the KB vs. calling OpenAI).
+- **Services**: Contain business logic (e.g., `ChatService` handles the logic of searching the KB vs. calling the configured AI provider).
 - **Models**: Eloquent models for `User`, `KnowledgeBase`, and `ChatSession`.
 - **Middleware**: Handles authentication (`Sanctum`) and rate limiting (`Throttle`).
 
@@ -35,5 +35,5 @@ graph TD
 2. React frontend sends a POST request to `/api/chat`.
 3. Laravel **ChatService** searches the **KnowledgeBase** table for matching keywords.
 4. If found, the pre-defined answer is returned.
-5. If NOT found, the request is sent to **OpenAI GPT-3.5** with university context.
+5. If NOT found, the request is sent to the configured **AI provider (OpenAI or DeepSeek)** with university context.
 6. The final response is saved to **ChatSessions** and returned to the user.

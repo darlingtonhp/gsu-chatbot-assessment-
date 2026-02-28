@@ -11,6 +11,11 @@ use Exception;
 
 class ChatService
 {
+    protected const SUPPORTED_AI_PROVIDERS = [
+        'openai',
+        'deepseek',
+    ];
+
     protected const FALLBACK_RESPONSES = [
         'en' => "I'm sorry, I couldn't find an answer to that in our knowledge base. Please contact GSU ICTS for more assistance.",
         'sn' => 'Ndine urombo, handina kuwana mhinduro iyi muknowledge base yedu. Ndapota taurai neGSU ICTS kuti mubatsirwe.',
@@ -128,7 +133,7 @@ class ChatService
             if ($faq) {
                 $response = $this->localizeFaqResponse($faq->answer, $language);
             } else {
-                // 2. Try OpenAI with recent conversation context if API key is set.
+                // 2. Try configured AI provider with recent conversation context if API key is set.
                 $response = $this->getAiResponse($message, $recentHistory, $language);
             }
         }
@@ -283,7 +288,7 @@ class ChatService
     }
 
     /**
-     * Call OpenAI with conversational context when available.
+     * Call the configured AI provider with conversational context when available.
      */
     protected function getAiResponse(
         string $message,
@@ -292,9 +297,7 @@ class ChatService
         bool $allowSmallTalk = false
     ): string
     {
-        $apiKey = $this->getOpenAiKey();
-
-        if (! $apiKey) {
+        if ($this->resolveAiProviderConfigs() === []) {
             return $allowSmallTalk
                 ? $this->getSmallTalkResponse($language)
                 : $this->getFallbackResponse($language);
@@ -323,47 +326,181 @@ class ChatService
             'content' => $message,
         ];
 
-        try {
-            $openAi = new OpenAi($apiKey);
-            $chat = $openAi->chat([
-                'model' => $this->getOpenAiModel(),
-                'messages' => $messages,
-                'temperature' => 0.4,
-                'max_tokens' => 400,
-            ]);
+        $content = $this->requestChatCompletionWithFailover(
+            $messages,
+            temperature: 0.4,
+            maxTokens: 400,
+            logContext: 'Chat Error'
+        );
 
-            $content = $this->extractOpenAiMessageContent($chat, 'OpenAI Error');
-            if ($content !== null) {
-                return $content;
-            }
-
-            return $allowSmallTalk
-                ? $this->getSmallTalkResponse($language)
-                : "I'm sorry, I'm having trouble processing that right now. Please try again or contact ICTS.";
-        } catch (Exception $e) {
-            Log::error('OpenAI Error: '.$e->getMessage());
-            return $allowSmallTalk
-                ? $this->getSmallTalkResponse($language)
-                : "I'm technically unable to answer that at the moment. Please refer to our FAQs or contact support.";
+        if ($content !== null) {
+            return $content;
         }
+
+        return $allowSmallTalk
+            ? $this->getSmallTalkResponse($language)
+            : "I'm sorry, I'm having trouble processing that right now. Please try again or contact ICTS.";
     }
 
-    protected function getOpenAiKey(): ?string
+    /**
+     * @return array<int, array{provider: string, key: string, model: string, base_url: string|null}>
+     */
+    protected function resolveAiProviderConfigs(): array
     {
-        $apiKey = trim((string) config('services.openai.key'));
+        $configs = [];
 
-        if ($apiKey === '' || $apiKey === 'your_openai_api_key_here') {
+        foreach ($this->getProviderPriority() as $provider) {
+            $key = $this->getProviderApiKey($provider);
+            if (! $key) {
+                continue;
+            }
+
+            $configs[] = [
+                'provider' => $provider,
+                'key' => $key,
+                'model' => $this->getProviderModel($provider),
+                'base_url' => $this->getProviderBaseUrl($provider),
+            ];
+        }
+
+        return $configs;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function getProviderPriority(): array
+    {
+        $preferred = $this->getPreferredAiProvider();
+        $others = array_values(array_diff(self::SUPPORTED_AI_PROVIDERS, [$preferred]));
+
+        return array_merge([$preferred], $others);
+    }
+
+    protected function getPreferredAiProvider(): string
+    {
+        $provider = Str::lower(trim((string) config('services.ai.provider', 'openai')));
+
+        return in_array($provider, self::SUPPORTED_AI_PROVIDERS, true) ? $provider : 'openai';
+    }
+
+    protected function getProviderApiKey(string $provider): ?string
+    {
+        $apiKey = trim((string) config("services.{$provider}.key"));
+        $normalized = Str::lower($apiKey);
+
+        if ($apiKey === '' || in_array($normalized, [
+            'your_openai_api_key_here',
+            'your_deepseek_api_key_here',
+        ], true)) {
             return null;
         }
 
         return $apiKey;
     }
 
-    protected function getOpenAiModel(): string
+    protected function getProviderModel(string $provider): string
     {
-        $model = trim((string) config('services.openai.model'));
+        $model = trim((string) config("services.{$provider}.model"));
+        if ($model !== '') {
+            return $model;
+        }
 
-        return $model !== '' ? $model : 'gpt-4o-mini';
+        return $provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o-mini';
+    }
+
+    protected function getProviderBaseUrl(string $provider): ?string
+    {
+        $baseUrl = trim((string) config("services.{$provider}.base_url"));
+        if ($baseUrl === '') {
+            return null;
+        }
+
+        $normalized = rtrim($baseUrl, '/');
+        if ($provider === 'deepseek' && Str::endsWith(Str::lower($normalized), '/v1')) {
+            $normalized = substr($normalized, 0, -3);
+        }
+
+        return $normalized !== '' ? $normalized : null;
+    }
+
+    protected function requestChatCompletionWithFailover(
+        array $messages,
+        float $temperature,
+        int $maxTokens,
+        string $logContext
+    ): ?string {
+        $providerConfigs = $this->resolveAiProviderConfigs();
+        if ($providerConfigs === []) {
+            return null;
+        }
+
+        $failedProvider = null;
+
+        foreach ($providerConfigs as $providerConfig) {
+            $provider = (string) ($providerConfig['provider'] ?? 'openai');
+            if ($failedProvider !== null) {
+                Log::warning('Retrying AI request with fallback provider.', [
+                    'failed_provider' => $failedProvider,
+                    'fallback_provider' => $provider,
+                    'context' => $logContext,
+                ]);
+            }
+
+            $content = $this->requestChatCompletion(
+                $providerConfig,
+                $messages,
+                $temperature,
+                $maxTokens,
+                $logContext
+            );
+
+            if ($content !== null) {
+                return $content;
+            }
+
+            $failedProvider = $provider;
+        }
+
+        return null;
+    }
+
+    protected function requestChatCompletion(
+        array $providerConfig,
+        array $messages,
+        float $temperature,
+        int $maxTokens,
+        string $logContext
+    ): ?string {
+        $providerName = $this->formatProviderName((string) ($providerConfig['provider'] ?? 'openai'));
+
+        try {
+            $openAi = new OpenAi((string) $providerConfig['key']);
+            $baseUrl = (string) ($providerConfig['base_url'] ?? '');
+            if ($baseUrl !== '') {
+                $openAi->setBaseURL($baseUrl);
+            }
+
+            $chat = $openAi->chat([
+                'model' => (string) $providerConfig['model'],
+                'messages' => $messages,
+                'temperature' => $temperature,
+                'max_tokens' => $maxTokens,
+            ]);
+
+            return $this->extractChatMessageContent($chat, "{$providerName} {$logContext}");
+        } catch (Exception $e) {
+            Log::error("{$providerName} {$logContext}: ".$e->getMessage());
+            return null;
+        }
+    }
+
+    protected function formatProviderName(string $provider): string
+    {
+        return match ($provider) {
+            'deepseek' => 'DeepSeek',
+            default => 'OpenAI',
+        };
     }
 
     protected function getLanguageName(string $language): string
@@ -410,12 +547,12 @@ class ChatService
         return $score;
     }
 
-    protected function extractOpenAiMessageContent(string $chatResponse, string $logContext): ?string
+    protected function extractChatMessageContent(string $chatResponse, string $logContext): ?string
     {
         $decoded = json_decode($chatResponse, true);
 
         if (! is_array($decoded)) {
-            Log::error($logContext.': Invalid JSON response from OpenAI.', [
+            Log::error($logContext.': Invalid JSON response from provider.', [
                 'response_preview' => Str::limit($chatResponse, 500),
             ]);
             return null;
@@ -426,7 +563,7 @@ class ChatService
                 ? $decoded['error']
                 : ['message' => (string) $decoded['error']];
 
-            Log::error($logContext.': '.$this->formatOpenAiError($error), [
+            Log::error($logContext.': '.$this->formatApiError($error), [
                 'error' => $error,
             ]);
             return null;
@@ -438,14 +575,14 @@ class ChatService
             return trim($content);
         }
 
-        Log::error($logContext.': OpenAI response did not include assistant content.', [
+        Log::error($logContext.': Provider response did not include assistant content.', [
             'response_keys' => array_keys($decoded),
         ]);
 
         return null;
     }
 
-    protected function formatOpenAiError(array $error): string
+    protected function formatApiError(array $error): string
     {
         $message = trim((string) ($error['message'] ?? 'Unknown API error.'));
         $type = trim((string) ($error['type'] ?? ''));
@@ -576,35 +713,26 @@ class ChatService
             return $answer;
         }
 
-        $apiKey = $this->getOpenAiKey();
-        if (! $apiKey) {
+        if ($this->resolveAiProviderConfigs() === []) {
             return $answer;
         }
 
-        try {
-            $openAi = new OpenAi($apiKey);
-            $chat = $openAi->chat([
-                'model' => $this->getOpenAiModel(),
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => 'Translate the following university support response into '.$this->getLanguageName($language).'. Preserve meaning. Keep it concise.',
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $answer,
-                    ],
+        $content = $this->requestChatCompletionWithFailover(
+            [
+                [
+                    'role' => 'system',
+                    'content' => 'Translate the following university support response into '.$this->getLanguageName($language).'. Preserve meaning. Keep it concise.',
                 ],
-                'temperature' => 0.2,
-                'max_tokens' => 350,
-            ]);
+                [
+                    'role' => 'user',
+                    'content' => $answer,
+                ],
+            ],
+            temperature: 0.2,
+            maxTokens: 350,
+            logContext: 'Translation Error'
+        );
 
-            $content = $this->extractOpenAiMessageContent($chat, 'OpenAI Translation Error');
-
-            return $content ?? $answer;
-        } catch (Exception $e) {
-            Log::error('OpenAI Translation Error: '.$e->getMessage());
-            return $answer;
-        }
+        return $content ?? $answer;
     }
 }

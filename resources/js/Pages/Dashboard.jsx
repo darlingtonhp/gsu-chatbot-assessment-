@@ -1,61 +1,15 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link } from "@inertiajs/react";
-import { useEffect, useState } from "react";
-import axios from "axios";
 
-export default function Dashboard() {
-    const [state, setState] = useState({
-        loading: true,
-        faqs: 0,
-        chats: 0,
-        sessions: 0,
-        categories: 0,
-        latestActivity: null,
-    });
-
-    useEffect(() => {
-        let isMounted = true;
-
-        const fetchStats = async () => {
-            try {
-                const [faqResponse, logResponse] = await Promise.all([
-                    axios.get("/api/faqs"),
-                    axios.get("/api/admin/chat-logs"),
-                ]);
-
-                if (!isMounted) {
-                    return;
-                }
-
-                const faqs = faqResponse?.data || [];
-                const logs = logResponse?.data || [];
-
-                const sessions = new Set(logs.map((log) => log.session_id)).size;
-                const categories = new Set(faqs.map((faq) => faq.category).filter(Boolean)).size;
-
-                setState({
-                    loading: false,
-                    faqs: faqs.length,
-                    chats: logs.length,
-                    sessions,
-                    categories,
-                    latestActivity: logs[0]?.created_at || null,
-                });
-            } catch (error) {
-                if (!isMounted) {
-                    return;
-                }
-
-                setState((previous) => ({ ...previous, loading: false }));
-            }
-        };
-
-        fetchStats();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
+export default function Dashboard({ stats }) {
+    const state = {
+        loading: false,
+        faqs: Number(stats?.faqs ?? 0),
+        chats: Number(stats?.chats ?? 0),
+        sessions: Number(stats?.sessions ?? 0),
+        categories: Number(stats?.categories ?? 0),
+        latestActivity: stats?.latestActivity ?? null,
+    };
 
     const metricCards = [
         {

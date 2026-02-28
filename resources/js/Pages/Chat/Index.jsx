@@ -103,7 +103,7 @@ export default function Index() {
                 <div className="surface-card flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6">
                     <div className="flex items-center gap-3">
                         <Link href="/" className="flex items-center gap-3">
-                            <ApplicationLogo className="h-10 w-10" />
+                            <ApplicationLogo className="h-10 w-auto" />
                             <div>
                                 <p className="font-display text-lg font-bold text-slate-900">GSU SmartAssist</p>
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
@@ -173,7 +173,7 @@ export default function Index() {
                         </div>
                     </div>
 
-                    <div className="soft-scrollbar flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+                    <div className="soft-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
                         {messages.map((message, index) => (
                             <article
                                 key={message.id}

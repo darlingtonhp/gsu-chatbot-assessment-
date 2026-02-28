@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import axios from "axios";
 
-export default function ChatLogs() {
-    const [logs, setLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
+export default function ChatLogs({ initialLogs = [] }) {
+    const [logs, setLogs] = useState(initialLogs);
+    const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -14,7 +14,7 @@ export default function ChatLogs() {
         setErrorMessage("");
 
         try {
-            const response = await axios.get("/api/admin/chat-logs");
+            const response = await axios.get("/admin/chat-logs/data");
             setLogs(response.data || []);
         } catch (error) {
             setLogs([]);
@@ -27,10 +27,6 @@ export default function ChatLogs() {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchLogs();
-    }, []);
 
     const filteredLogs = useMemo(() => {
         const term = query.trim().toLowerCase();

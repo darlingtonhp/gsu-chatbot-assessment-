@@ -34,7 +34,9 @@ Create a `.env` file and set:
 - `DB_DATABASE=gsu_chatbot`
 - `DB_USERNAME=your_db_user`
 - `DB_PASSWORD=your_db_password`
-- `OPENAI_API_KEY=your_openai_key`
+- `AI_PROVIDER=openai` and `OPENAI_API_KEY=your_openai_key`
+  or
+- `AI_PROVIDER=deepseek` and `DEEPSEEK_API_KEY=your_deepseek_key`
 
 ## 4. Optimization
 Run these commands to speed up your production app:

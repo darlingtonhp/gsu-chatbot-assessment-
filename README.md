@@ -7,7 +7,7 @@ GSU SmartAssist is an intelligent university chatbot designed for Gwanda State U
 - **Frontend**: React + Inertia.js
 - **Styling**: Tailwind CSS
 - **Database**: MySQL
-- **AI**: OpenAI GPT-3.5 Turbo
+- **AI**: Configurable OpenAI or DeepSeek (OpenAI-compatible API)
 - **WhatsApp**: Evolution API (Unverified Bridge)
 
 ## Features
@@ -47,7 +47,7 @@ Full API details are available in the [API Documentation](docs/api-documentation
 2. **Environment Configuration**:
    - Copy `.env.example` to `.env`.
    - Configure `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`.
-   - (Optional) Add `OPENAI_API_KEY` for AI features.
+   - (Optional) Add AI provider credentials for fallback features (`OPENAI_API_KEY` or `DEEPSEEK_API_KEY`).
 3. **Database Setup**:
    - Create the database specified in `.env`.
    - Run migrations and seed the database:
@@ -69,13 +69,22 @@ For production deployment instructions, please see the [Deployment Guide](docs/d
 ### 🐳 Docker (Local Development)
 To run the project locally using Docker, follow the [Docker Setup Guide](docs/docker-setup.md).
 
-### 🤖 OpenAI Setup
-To use the AI fallback features:
-1. **Get an API Key**: Sign up at [OpenAI Platform](https://platform.openai.com/) and create a new API key.
-2. **Add Credits**: OpenAI is a paid service. Ensure you have an active billing method or remaining trial credits.
-3. **Configure .env**: Add your key to the `.env` file:
+### 🤖 AI Provider Setup
+To use AI fallback features, configure one provider in `.env`:
+
+1. **OpenAI**:
    ```bash
-   OPENAI_API_KEY=your_key_here
+   AI_PROVIDER=openai
+   OPENAI_API_KEY=your_openai_key_here
+   OPENAI_MODEL=gpt-4o-mini
+   ```
+
+2. **DeepSeek**:
+   ```bash
+   AI_PROVIDER=deepseek
+   DEEPSEEK_API_KEY=your_deepseek_key_here
+   DEEPSEEK_MODEL=deepseek-chat
+   DEEPSEEK_BASE_URL=https://api.deepseek.com
    ```
 
 ## Admin Access

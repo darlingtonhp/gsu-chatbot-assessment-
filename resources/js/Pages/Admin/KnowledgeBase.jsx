@@ -68,9 +68,9 @@ export default function KnowledgeBase() {
 
         try {
             if (editing) {
-                await axios.put(`/api/admin/faqs/${editing.id}`, formData);
+                await axios.put(`/admin/faqs/${editing.id}`, formData);
             } else {
-                await axios.post("/api/admin/faqs", formData);
+                await axios.post("/admin/faqs", formData);
             }
 
             resetEditor();
@@ -99,7 +99,7 @@ export default function KnowledgeBase() {
         }
 
         try {
-            await axios.delete(`/api/admin/faqs/${id}`);
+            await axios.delete(`/admin/faqs/${id}`);
             await fetchFaqs();
         } catch (error) {
             // Keep the UI stable if deletion fails.

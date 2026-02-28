@@ -4,7 +4,7 @@ export default function ApplicationLogo(props) {
             {...props}
             src="/images/Logo.png"
             alt="Gwanda State University Logo"
-            className={`object-contain ${props.className || ""}`}
+            className={`shrink-0 object-contain ${props.className || ""}`}
         />
     );
 }

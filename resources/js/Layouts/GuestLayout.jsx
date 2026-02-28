@@ -9,8 +9,8 @@ export default function GuestLayout({ children }) {
 
             <div className="section-shell relative grid gap-6 lg:grid-cols-[0.95fr,1.05fr] lg:items-center">
                 <section className="surface-card p-6 sm:p-8">
-                    <div className="flex items-center gap-3">
-                        <ApplicationLogo className="h-11 w-11" />
+                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                        <ApplicationLogo className="h-12 w-auto max-w-full" />
                         <div>
                             <p className="font-display text-2xl font-bold text-slate-900">GSU SmartAssist</p>
                             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">

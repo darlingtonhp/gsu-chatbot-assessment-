@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Api\KnowledgeBaseController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -14,9 +16,9 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'admin', 'verified'])->name('dashboard');
+Route::get('/dashboard', [AdminController::class, 'dashboard'])
+    ->middleware(['auth', 'admin', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -30,9 +32,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
         return Inertia::render('Admin/KnowledgeBase');
     })->name('admin.faqs');
 
-    Route::get('/admin/chat-logs', function () {
-        return Inertia::render('Admin/ChatLogs');
-    })->name('admin.logs');
+    Route::post('/admin/faqs', [KnowledgeBaseController::class, 'store'])->name('admin.faqs.store');
+    Route::put('/admin/faqs/{id}', [KnowledgeBaseController::class, 'update'])->name('admin.faqs.update');
+    Route::delete('/admin/faqs/{id}', [KnowledgeBaseController::class, 'destroy'])->name('admin.faqs.destroy');
+    Route::get('/admin/chat-logs', [AdminController::class, 'chatLogsPage'])->name('admin.logs');
+    Route::get('/admin/chat-logs/data', [AdminController::class, 'chatLogs'])->name('admin.logs.data');
 });
 
 // Public Pages

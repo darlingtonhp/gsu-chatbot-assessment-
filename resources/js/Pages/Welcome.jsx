@@ -47,7 +47,7 @@ export default function Welcome({ auth }) {
             <nav className="sticky top-0 z-50 border-b border-white/70 bg-white/80 backdrop-blur-xl">
                 <div className="section-shell flex items-center justify-between py-4">
                     <Link href="/" className="flex items-center gap-3">
-                        <ApplicationLogo className="h-10 w-10" />
+                        <ApplicationLogo className="h-10 w-auto" />
                         <div>
                             <p className="font-display text-base font-bold text-slate-900">
                                 GSU SmartAssist
@@ -212,7 +212,7 @@ export default function Welcome({ auth }) {
             <footer className="border-t border-white/80 bg-white/70 py-8">
                 <div className="section-shell flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
                     <div className="flex items-center gap-2">
-                        <ApplicationLogo className="h-8 w-8" />
+                        <ApplicationLogo className="h-8 w-auto" />
                         <p className="text-sm font-semibold text-slate-700">GSU SmartAssist</p>
                     </div>
                     <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
