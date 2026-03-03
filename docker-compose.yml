@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   # PHP Application
   app:
@@ -9,6 +8,10 @@ services:
     container_name: gsu-app
     restart: unless-stopped
     working_dir: /var/www
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_PASSWORD: ${DB_PASSWORD:-root}
     volumes:
       - ./:/var/www
     networks:
@@ -33,12 +36,10 @@ services:
     container_name: gsu-db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_DATABASE: ${DB_DATABASE:-gsu_chatbot_db}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     networks:
       - gsu-network
 
